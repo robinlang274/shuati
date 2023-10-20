@@ -1,5 +1,3 @@
-import re
-
 # 从SQL文件中逐行读取内容
 def read_sql_file(file_path):
     with open(file_path, 'r') as sql_file:
@@ -9,17 +7,22 @@ def read_sql_file(file_path):
 # 提取视图需要的数据源表
 def extract_data_source_table(lines):
     source_tables = []
+    in_from_clause = False
     for line in lines:
-        match = re.search(r'FROM `([^`]+)`', line)
-        if match:
-            source_tables.append(match.group(1))
+        if in_from_clause:
+            match = re.search(r'`([^`]+)`', line)
+            if match:
+                source_tables.append(match.group(1))
+            if ';' in line:
+                in_from_clause = False
+        if line.upper().startswith('FROM '):
+            in_from_clause = True
     return source_tables
 
 # 提取视图需要的列名
 def extract_required_columns(lines):
     in_select_clause = False
     required_columns = []
-    
     for line in lines:
         if in_select_clause:
             line = line.strip()
